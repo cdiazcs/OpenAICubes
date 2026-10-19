@@ -1,0 +1,20 @@
+# Java
+*.class
+build/
+out/
+# Python
+__pycache__/
+*.pyc
+.venv/
+# .NET
+bin/
+obj/
+.vs/
+# General
+.DS_Store
+.idea/
+.vscode/
+*.log
+*.tmp
+# Pruebas (conservar solo datos deliberadamente publicados)
+benchmarks/results/*.csv

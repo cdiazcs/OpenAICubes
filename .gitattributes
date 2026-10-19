@@ -1,0 +1,5 @@
+* text=auto
+*.java text eol=lf
+*.py text eol=lf
+*.cs text eol=lf
+*.md text eol=lf
