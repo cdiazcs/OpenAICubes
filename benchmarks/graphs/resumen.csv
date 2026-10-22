@@ -1,0 +1,5 @@
+prueba,solicitudes,correctas,errores,exito_pct,latencia_media_ms,p95_ms
+csharp-100,100,100,0,100.00,1.010313,1.419700
+csharp-300,300,300,0,100.00,0.869212,1.327000
+csharp-500,500,500,0,100.00,0.751057,1.185500
+csharp-1000,1000,1000,0,100.00,0.696063,1.170500
