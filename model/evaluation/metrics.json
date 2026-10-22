@@ -1,0 +1,37 @@
+{
+  "classes": [
+    "circulo",
+    "cruz",
+    "triangulo"
+  ],
+  "samples": 300,
+  "accuracy": 1.0,
+  "confusion_matrix_rows_true_columns_predicted": [
+    [
+      100,
+      0,
+      0
+    ],
+    [
+      0,
+      100,
+      0
+    ],
+    [
+      0,
+      0,
+      100
+    ]
+  ],
+  "per_class_recall": {
+    "circulo": 1.0,
+    "cruz": 1.0,
+    "triangulo": 1.0
+  },
+  "split": "test",
+  "seed": 31415,
+  "dataset_sha256": "b9130514dca3a0b0bb3ae34cf23a59d1c5f455576ad41fce73118b6112143d81",
+  "weights_sha256": "df582438e8fa66b5f606408d646b8df3025f3e9b033dd780b17e45df0c550ec4",
+  "minimum_accuracy": 0.85,
+  "meets_target": true
+}

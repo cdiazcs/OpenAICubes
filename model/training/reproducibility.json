@@ -1,0 +1,11 @@
+{
+  "full_training_runs": 2,
+  "weights_identical_byte_for_byte": true,
+  "weights_sha256": "df582438e8fa66b5f606408d646b8df3025f3e9b033dd780b17e45df0c550ec4",
+  "full_dataset_generations": 2,
+  "dataset_identical_byte_for_byte": true,
+  "dataset_sha256": "b9130514dca3a0b0bb3ae34cf23a59d1c5f455576ad41fce73118b6112143d81",
+  "seed": 20261022,
+  "environment": "Windows; Python 3.12.11",
+  "scope": "Reproduced on this environment; floating-point/libm variations may differ on other platforms."
+}

@@ -1,5 +1,9 @@
 * text=auto
+.gitattributes text eol=lf
 *.java text eol=lf
 *.py text eol=lf
 *.cs text eol=lf
 *.md text eol=lf
+model/weights/*.txt text eol=lf
+*.png binary
+*.zip binary

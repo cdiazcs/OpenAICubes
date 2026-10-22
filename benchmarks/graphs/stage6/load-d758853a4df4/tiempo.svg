@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1060" height="490" viewBox="0 0 1060 490">
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="Arial, sans-serif" fill="#273142">
+<text x="530.0" y="28" text-anchor="middle" font-size="20">Tiempo total</text>
+<text x="530.0" y="50" text-anchor="middle" font-size="11">IDENTIFY medido; s; carga d758853a4df4</text>
+<line x1="85" x2="1035" y1="340.0" y2="340.0" stroke="#ddd"/>
+<text x="77" y="344.0" text-anchor="end" font-size="10">0</text>
+<line x1="85" x2="1035" y1="287.0" y2="287.0" stroke="#ddd"/>
+<text x="77" y="291.0" text-anchor="end" font-size="10">0.01586</text>
+<line x1="85" x2="1035" y1="234.0" y2="234.0" stroke="#ddd"/>
+<text x="77" y="238.0" text-anchor="end" font-size="10">0.03172</text>
+<line x1="85" x2="1035" y1="181.0" y2="181.0" stroke="#ddd"/>
+<text x="77" y="185.0" text-anchor="end" font-size="10">0.04758</text>
+<line x1="85" x2="1035" y1="128.0" y2="128.0" stroke="#ddd"/>
+<text x="77" y="132.0" text-anchor="end" font-size="10">0.06344</text>
+<line x1="85" x2="1035" y1="75.0" y2="75.0" stroke="#ddd"/>
+<text x="77" y="79.0" text-anchor="end" font-size="10">0.0793</text>
+<rect x="150.16666666666669" y="206.84287589654323" width="24" height="133.15712410345677" fill="#4b81c7"/>
+<text x="162.16666666666669" y="201.84287589654323" text-anchor="middle" font-size="10">0.03985</text>
+<text transform="translate(156.16666666666669,355) rotate(30)" font-size="10">local-parallel-c8-r1 c=8</text>
+<rect x="308.5" y="202.56257604977296" width="24" height="137.43742395022704" fill="#4b81c7"/>
+<text x="320.5" y="197.56257604977296" text-anchor="middle" font-size="10">0.04113</text>
+<text transform="translate(314.5,355) rotate(30)" font-size="10">local-parallel-c8-r2 c=8</text>
+<rect x="466.83333333333337" y="109.56521739130434" width="24" height="230.43478260869566" fill="#4b81c7"/>
+<text x="478.83333333333337" y="104.56521739130434" text-anchor="middle" font-size="10">0.06896</text>
+<text transform="translate(472.83333333333337,355) rotate(30)" font-size="10">local-parallel-c8-r3 c=8</text>
+<rect x="625.1666666666667" y="224.30124622166727" width="24" height="115.69875377833273" fill="#4b81c7"/>
+<text x="637.1666666666667" y="219.30124622166727" text-anchor="middle" font-size="10">0.03462</text>
+<text transform="translate(631.1666666666667,355) rotate(30)" font-size="10">local-sequential-c8-r1 c=8</text>
+<rect x="783.5" y="241.0979728824455" width="24" height="98.90202711755448" fill="#4b81c7"/>
+<text x="795.5" y="236.0979728824455" text-anchor="middle" font-size="10">0.0296</text>
+<text transform="translate(789.5,355) rotate(30)" font-size="10">local-sequential-c8-r2 c=8</text>
+<rect x="941.8333333333334" y="236.0885283510275" width="24" height="103.91147164897251" fill="#4b81c7"/>
+<text x="953.8333333333334" y="231.0885283510275" text-anchor="middle" font-size="10">0.0311</text>
+<text transform="translate(947.8333333333334,355) rotate(30)" font-size="10">local-sequential-c8-r3 c=8</text>
+<text x="85" y="478" fill="#4b81c7" font-size="12">total.s</text>
+</g>
+</svg>

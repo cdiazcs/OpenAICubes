@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1060" height="490" viewBox="0 0 1060 490">
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="Arial, sans-serif" fill="#273142">
+<text x="530.0" y="28" text-anchor="middle" font-size="20">Speedup frente al secuencial equivalente</text>
+<text x="530.0" y="50" text-anchor="middle" font-size="11">IDENTIFY medido; razon; carga d758853a4df4</text>
+<line x1="85" x2="1035" y1="340.0" y2="340.0" stroke="#ddd"/>
+<text x="77" y="344.0" text-anchor="end" font-size="10">0</text>
+<line x1="85" x2="1035" y1="287.0" y2="287.0" stroke="#ddd"/>
+<text x="77" y="291.0" text-anchor="end" font-size="10">0.2756</text>
+<line x1="85" x2="1035" y1="234.0" y2="234.0" stroke="#ddd"/>
+<text x="77" y="238.0" text-anchor="end" font-size="10">0.5513</text>
+<line x1="85" x2="1035" y1="181.0" y2="181.0" stroke="#ddd"/>
+<text x="77" y="185.0" text-anchor="end" font-size="10">0.8269</text>
+<line x1="85" x2="1035" y1="128.0" y2="128.0" stroke="#ddd"/>
+<text x="77" y="132.0" text-anchor="end" font-size="10">1.103</text>
+<line x1="85" x2="1035" y1="75.0" y2="75.0" stroke="#ddd"/>
+<text x="77" y="79.0" text-anchor="end" font-size="10">1.378</text>
+<rect x="136.16666666666669" y="172.93596941667644" width="24" height="167.06403058332356" fill="#7e64bb"/>
+<text x="148.16666666666669" y="167.93596941667644" text-anchor="middle" font-size="10">0.8689</text>
+<rect x="164.16666666666669" y="109.56521739130434" width="24" height="230.43478260869566" fill="#bb647f"/>
+<text x="176.16666666666669" y="104.56521739130434" text-anchor="middle" font-size="10">1.198</text>
+<text transform="translate(156.16666666666669,355) rotate(30)" font-size="10">local-parallel-c8-r1 c=8</text>
+<rect x="294.5" y="201.63735123983417" width="24" height="138.36264876016583" fill="#7e64bb"/>
+<text x="306.5" y="196.63735123983417" text-anchor="middle" font-size="10">0.7196</text>
+<rect x="322.5" y="128.92139051902532" width="24" height="211.07860948097468" fill="#bb647f"/>
+<text x="334.5" y="123.92139051902532" text-anchor="middle" font-size="10">1.098</text>
+<text transform="translate(314.5,355) rotate(30)" font-size="10">local-parallel-c8-r2 c=8</text>
+<rect x="452.83333333333337" y="253.29699641115886" width="24" height="86.70300358884114" fill="#7e64bb"/>
+<text x="464.83333333333337" y="248.29699641115886" text-anchor="middle" font-size="10">0.4509</text>
+<rect x="480.83333333333337" y="227.18741043047447" width="24" height="112.81258956952551" fill="#bb647f"/>
+<text x="492.83333333333337" y="222.18741043047447" text-anchor="middle" font-size="10">0.5867</text>
+<text transform="translate(472.83333333333337,355) rotate(30)" font-size="10">local-parallel-c8-r3 c=8</text>
+<rect x="611.1666666666667" y="147.7268325964169" width="24" height="192.2731674035831" fill="#7e64bb"/>
+<text x="623.1666666666667" y="142.7268325964169" text-anchor="middle" font-size="10">1</text>
+<rect x="639.1666666666667" y="147.7268325964169" width="24" height="192.2731674035831" fill="#bb647f"/>
+<text x="651.1666666666667" y="142.7268325964169" text-anchor="middle" font-size="10">1</text>
+<text transform="translate(631.1666666666667,355) rotate(30)" font-size="10">local-sequential-c8-r1 c=8</text>
+<rect x="769.5" y="147.7268325964169" width="24" height="192.2731674035831" fill="#7e64bb"/>
+<text x="781.5" y="142.7268325964169" text-anchor="middle" font-size="10">1</text>
+<rect x="797.5" y="147.7268325964169" width="24" height="192.2731674035831" fill="#bb647f"/>
+<text x="809.5" y="142.7268325964169" text-anchor="middle" font-size="10">1</text>
+<text transform="translate(789.5,355) rotate(30)" font-size="10">local-sequential-c8-r2 c=8</text>
+<rect x="927.8333333333334" y="147.7268325964169" width="24" height="192.2731674035831" fill="#7e64bb"/>
+<text x="939.8333333333334" y="142.7268325964169" text-anchor="middle" font-size="10">1</text>
+<rect x="955.8333333333334" y="147.7268325964169" width="24" height="192.2731674035831" fill="#bb647f"/>
+<text x="967.8333333333334" y="142.7268325964169" text-anchor="middle" font-size="10">1</text>
+<text transform="translate(947.8333333333334,355) rotate(30)" font-size="10">local-sequential-c8-r3 c=8</text>
+<text x="85" y="478" fill="#7e64bb" font-size="12">speedup.total</text>
+<text x="325" y="478" fill="#bb647f" font-size="12">speedup.service</text>
+</g>
+</svg>

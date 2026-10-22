@@ -1,20 +1,39 @@
 """Worker Python 3 con solo stdlib. Micro chunks CONV y MLP. Pipeline CNN completo."""
 import math
+import re
 import socket
 import struct
 import sys
 import threading
-import os
+import time
+import unicodedata
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+from cnn_python.model import CNN, convolve_valid, relu, max_pooling
 
 MAX_BYTES = 2_000_000
-WEIGHTS_FILE = "model/weights/weights.txt" # Ruta relativa desde donde se ejecute
+FRAME_TIMEOUT_SECONDS = 15.0
+COMPUTE_THREADS = 1
+COMPUTE_SLOTS = threading.BoundedSemaphore(COMPUTE_THREADS)
+WEIGHTS_FILE = PROJECT_ROOT / "model" / "weights" / "weights.txt"
 
 # Variable global para guardar los pesos en memoria
 CNN_WEIGHTS = None
+CNN_MODEL = None
+_MODEL_LOCK = threading.Lock()
+_DECIMAL = re.compile(r'[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?')
 
-def recv_exact(sock, count):
+def recv_exact(sock, count, deadline=None):
     parts = bytearray()
     while len(parts) < count:
+        if deadline is not None:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError('frame_timeout')
+            sock.settimeout(remaining)
         more = sock.recv(count - len(parts))
         if not more:
             if len(parts) == 0:
@@ -25,13 +44,14 @@ def recv_exact(sock, count):
 
 
 def recv_frame(sock):
-    header = recv_exact(sock, 4)
+    deadline = time.monotonic() + FRAME_TIMEOUT_SECONDS
+    header = recv_exact(sock, 4, deadline)
     if header is None:
         return None
     length = struct.unpack('!I', header)[0]
     if not 0 < length <= MAX_BYTES:
         raise ValueError('invalid_length')
-    body = recv_exact(sock, length)
+    body = recv_exact(sock, length, deadline)
     if body is None:
         raise ValueError('missing_frame')
     return body.decode('utf-8')
@@ -57,117 +77,166 @@ def numeric(raw, count):
 def csv(v):
     return ','.join(format(x, '.12g') for x in v)
 
-# ==========================================
-# NUEVO: LÓGICA DE LA CNN COMPLETA
-# ==========================================
+
+def finite(value):
+    if not math.isfinite(value):
+        raise ValueError('nonfinite_result')
+    return value
 
 def load_weights():
-    """Carga los pesos desde el archivo de texto si no están en memoria."""
-    global CNN_WEIGHTS
-    if CNN_WEIGHTS is not None:
-        return
-    
-    if not os.path.exists(WEIGHTS_FILE):
-        print(f"[ADVERTENCIA] No se encontró {WEIGHTS_FILE}.", file=sys.stderr)
-        CNN_WEIGHTS = {}
-        return
+    """Carga validada y atomica; la ruta no depende del directorio de ejecucion."""
+    global CNN_MODEL, CNN_WEIGHTS
+    if CNN_MODEL is None:
+        with _MODEL_LOCK:
+            if CNN_MODEL is None:
+                model = CNN.load(WEIGHTS_FILE)
+                CNN_WEIGHTS = model.weights
+                CNN_MODEL = model
+    return CNN_MODEL
 
-    CNN_WEIGHTS = {}
-    current_key = None
-    
-    try:
-        with open(WEIGHTS_FILE, 'r') as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                if line in ['FILTER1', 'FILTER2', 'W1', 'B1', 'W2', 'B2']:
-                    current_key = line
-                elif current_key:
-                    # Convertir la línea de CSV a lista de floats
-                    CNN_WEIGHTS[current_key] = [float(x) for x in line.split(',')]
-                    current_key = None
-        print("[INFO] Pesos cargados correctamente en memoria.", flush=True)
-    except Exception as e:
-        print(f"[ERROR] Fallo al cargar pesos: {e}", file=sys.stderr)
-        CNN_WEIGHTS = {}
-
-def convolve_valid(image, rows, cols, kernel, kr, kc):
-    """Helper: Correlación válida para una imagen y un filtro (kernel)."""
-    out_rows, out_cols = rows - kr + 1, cols - kc + 1
-    result = []
-    for r in range(out_rows):
-        for c in range(out_cols):
-            acc = 0.0
-            for i in range(kr):
-                for j in range(kc):
-                    acc += image[(r+i)*cols + (c+j)] * kernel[i*kc+j]
-            result.append(acc)
-    return result, out_rows, out_cols
-
-def relu(matrix):
-    """Aplica ReLU a una lista plana."""
-    return [max(0.0, x) for x in matrix]
-
-def max_pooling(matrix, rows, cols):
-    """Max Pooling 2x2, stride 2."""
-    out_rows = rows // 2
-    out_cols = cols // 2
-    result = []
-    for r in range(out_rows):
-        for c in range(out_cols):
-            # Extraer ventana 2x2
-            p1 = matrix[(r*2)*cols + (c*2)]
-            p2 = matrix[(r*2)*cols + (c*2 + 1)]
-            p3 = matrix[(r*2 + 1)*cols + (c*2)]
-            p4 = matrix[(r*2 + 1)*cols + (c*2 + 1)]
-            result.append(max(p1, p2, p3, p4))
-    return result, out_rows, out_cols
 
 def run_full_cnn(image_csv):
-    """Pipeline: Conv -> ReLU -> Pooling -> Flatten -> MLP -> Softmax."""
-    load_weights()
-    if not CNN_WEIGHTS:
-        raise ValueError('weights_not_loaded')
+    """Interfaz compatible IDENTIFY; calculo compartido con la CNN secuencial."""
+    pixels = numeric(image_csv, 256)
+    return list(load_weights().predict(pixels).probabilities)
 
-    # 1. Parsear imagen 16x16 (256 valores)
-    image = numeric(image_csv, 256)
-    # Nota: Si la imagen viene en escala 0-255, normalízala aquí (x/255.0)
 
-    # 2. Capa Convolucional (2 filtros de 3x3) -> 14x14 (CORREGIDO A MAYÚSCULAS)
-    conv1, r1, c1 = convolve_valid(image, 16, 16, CNN_WEIGHTS['FILTER1'], 3, 3)
-    conv2, r2, c2 = convolve_valid(image, 16, 16, CNN_WEIGHTS['FILTER2'], 3, 3)
+def valid_id(value):
+    return (bool(value) and len(value) <= 128
+            and not any(ch == '|' or ch.isspace() or unicodedata.category(ch) in ('Cc', 'Cs') for ch in value))
 
-    # 3. ReLU
-    relu1 = relu(conv1)
-    relu2 = relu(conv2)
 
-    # 4. Max Pooling -> 7x7
-    pool1, pr1, pc1 = max_pooling(relu1, r1, c1)
-    pool2, pr2, pc2 = max_pooling(relu2, r2, c2)
+def job(fields):
+    """JOB req task CONV rows cols kr kc imageCSV kernelCSV (separado por |), o
+    JOB req task DENSE nInputs nOutputs inputCSV weightsCSV biasCSV.
+    PART|req|task|rows|cols|CSV17digitos|computeNanos; ERROR|req|task|reason.
+    DENSE devuelve sum(W*x)+b sin activacion. CONV usa el helper de referencia.
+    """
+    request_id = fields[1] if len(fields) > 1 and valid_id(fields[1]) else 'unknown'
+    task_id = fields[2] if len(fields) > 2 and valid_id(fields[2]) else 'unknown'
 
-    # 5. Flatten (98 componentes)
-    flat = pool1 + pool2 # 49 + 49 = 98
+    def dimension(raw):
+        if re.fullmatch(r'[0-9]{1,7}', raw) is None or not 1 <= int(raw) <= 1_000_000:
+            raise ValueError('invalid_dimensions')
+        return int(raw)
 
-    # 6. MLP (98 -> 8 -> 3) (CORREGIDO A MAYÚSCULAS)
-    ni, nh, no = 98, 8, 3
-    w1, b1 = CNN_WEIGHTS['W1'], CNN_WEIGHTS['B1']
-    w2, b2 = CNN_WEIGHTS['W2'], CNN_WEIGHTS['B2']
+    def product(a, b):
+        if a*b > 1_000_000:
+            raise ValueError('invalid_dimensions')
+        return a*b
 
-    h = [max(0.0, sum(w1[i * ni+j] * flat[j] for j in range(ni)) + b1[i]) for i in range(nh)]
-    logits = [sum(w2[i * nh+j] * h[j] for j in range(nh)) + b2[i] for i in range(no)]
+    def numbers(raw, count):
+        tokens = raw.split(',')
+        if len(tokens) != count or any(len(token) > 64 or _DECIMAL.fullmatch(token) is None for token in tokens):
+            raise ValueError('invalid_numbers')
+        values = [float(token) for token in tokens]
+        if not all(math.isfinite(value) for value in values):
+            raise ValueError('invalid_numbers')
+        return values
 
-    # 7. Softmax
-    exps = [math.exp(y - max(logits)) for y in logits]
-    total = sum(exps)
-    return [x / total for x in exps]
+    try:
+        if len(fields) < 3 or not valid_id(fields[1]) or not valid_id(fields[2]):
+            raise ValueError('invalid_job_id')
+        if len(fields) < 4:
+            raise ValueError('invalid_job_fields')
+        if fields[3] == 'CONV':
+            if len(fields) != 10:
+                raise ValueError('invalid_job_fields')
+            rows, cols, kr, kc = map(dimension, fields[4:8])
+            if kr > rows or kc > cols or (rows-kr+1)*(cols-kc+1)*kr*kc > 10_000_000:
+                raise ValueError('invalid_dimensions')
+            image, kernel = numbers(fields[8], product(rows, cols)), numbers(fields[9], product(kr, kc))
+            started = time.perf_counter_ns()
+            result, out_rows, out_cols = convolve_valid(image, rows, cols, kernel, kr, kc)
+        elif fields[3] == 'POST':
+            if len(fields) != 8:
+                raise ValueError('invalid_job_fields')
+            rows, cols = dimension(fields[5]), dimension(fields[6])
+            values = numbers(fields[7], product(rows, cols))
+            started = time.perf_counter_ns()
+            if fields[4] == 'POOL':
+                if min(rows, cols) < 2:
+                    raise ValueError('invalid_dimensions')
+                result, out_rows, out_cols = max_pooling(relu(values), rows, cols)
+            elif fields[4] == 'RELU':
+                result, out_rows, out_cols = relu(values), rows, cols
+            elif fields[4] == 'SOFTMAX':
+                if rows != 1:
+                    raise ValueError('invalid_dimensions')
+                maximum = max(values)
+                result = [math.exp(value-maximum) for value in values]
+                total = sum(result)
+                result, out_rows, out_cols = [value/total for value in result], rows, cols
+            else:
+                raise ValueError('unsupported_operation')
+        elif fields[3] == 'DENSE':
+            if len(fields) != 9:
+                raise ValueError('invalid_job_fields')
+            ni, no = dimension(fields[4]), dimension(fields[5])
+            weight_count = product(ni, no)
+            x, weights, bias = numbers(fields[6], ni), numbers(fields[7], weight_count), numbers(fields[8], no)
+            started = time.perf_counter_ns()
+            result = [finite(sum(weights[i*ni+j]*x[j] for j in range(ni))+bias[i]) for i in range(no)]
+            out_rows, out_cols = 1, no
+        else:
+            raise ValueError('unsupported_operation')
+        elapsed = max(0, time.perf_counter_ns()-started)
+        return f'PART|{request_id}|{task_id}|{out_rows}|{out_cols}|' + ','.join(format(x, '.17g') for x in result) + f'|{elapsed}'
+    except (ValueError, OverflowError) as error:
+        code = str(error)
+        if code not in ('invalid_job_id', 'invalid_job_fields', 'invalid_dimensions',
+                        'invalid_numbers', 'nonfinite_result', 'unsupported_operation'):
+            code = 'invalid_job'
+        return f'ERROR|{request_id}|{task_id}|{code}'
 
-# ==========================================
-# EVALUATE ACTUALIZADO
-# ==========================================
+
+def identify(fields):
+    """RESULT conserva tres probabilidades: argmax = circulo/cruz/triangulo.
+
+    Errores estables: invalid_request_id, invalid_identify_fields,
+    invalid_image_size, invalid_pixels, model_unavailable, cnn_processing_error.
+    IDs: 1..128 caracteres Unicode, sin separadores, espacios ni controles.
+    Numeros: decimal ASCII, hasta 64 caracteres por pixel, finitos en [0,1].
+    """
+    job_id = fields[1] if len(fields) > 1 else ''
+    if not valid_id(job_id):
+        return 'ERROR|unknown|invalid_request_id'
+    prefix = 'ERROR|' + job_id + '|'
+    if len(fields) == 4 and fields[3] == 'SEQUENTIAL':
+        fields = fields[:3]
+    elif len(fields) == 4 and fields[3] == 'DISTRIBUTED':
+        return prefix + 'unsupported_mode'
+    if len(fields) != 3:
+        return prefix + 'invalid_identify_fields'
+    tokens = fields[2].split(',')
+    if len(tokens) != 256:
+        return prefix + 'invalid_image_size'
+    if any(len(token) > 64 or _DECIMAL.fullmatch(token) is None for token in tokens):
+        return prefix + 'invalid_pixels'
+    pixels = [float(token) for token in tokens]
+    if not all(math.isfinite(value) and 0 <= value <= 1 for value in pixels):
+        return prefix + 'invalid_pixels'
+    try:
+        model = load_weights()
+    except (OSError, ValueError, OverflowError):
+        return prefix + 'model_unavailable'
+    try:
+        prediction = model.predict(pixels)
+    except (ValueError, ArithmeticError):
+        return prefix + 'cnn_processing_error'
+    return 'RESULT|' + job_id + '|1|3|' + csv(prediction.probabilities)
+
 
 def evaluate(message):
     p = message.split('|')
+    if p[0] == 'JOB':
+        return job(p)
+    if p[0] == 'CAPS':
+        if len(p) != 2 or not valid_id(p[1]):
+            return 'ERROR|unknown|invalid_request_id'
+        return f'CAPS|{p[1]}|Python|CONV,DENSE,POST,IDENTIFY|{COMPUTE_THREADS}'
+    if p[0] == 'IDENTIFY':
+        return identify(p)
     if len(p) == 2 and p[0] == 'PING':
         return f'PONG|{p[1]}|Python'
         
@@ -189,52 +258,61 @@ def evaluate(message):
         w1, b1 = numeric(p[6], ni * nh), numeric(p[7], nh)
         w2, b2 = numeric(p[8], nh * no), numeric(p[9], no)
         
-        h = [max(0.0, sum(w1[i * ni+j] * x[j] for j in range(ni)) + b1[i]) for i in range(nh)]
-        logits = [sum(w2[i * nh+j] * h[j] for j in range(nh)) + b2[i] for i in range(no)]
+        h = [max(0.0, finite(sum(w1[i * ni+j] * x[j] for j in range(ni)) + b1[i])) for i in range(nh)]
+        logits = [finite(sum(w2[i * nh+j] * h[j] for j in range(nh)) + b2[i]) for i in range(no)]
         exps = [math.exp(y - max(logits)) for y in logits]
         total = sum(exps)
         return f'RESULT|{p[1]}|1|{no}|{csv([x / total for x in exps])}'
-
-    # NUEVO COMANDO: IDENTIFY
-    if len(p) == 3 and p[0] == 'IDENTIFY':
-        request_id = p[1]
-        image_csv = p[2]
-        
-        try:
-            probs = run_full_cnn(image_csv)
-            return f'RESULT|{request_id}|1|3|{csv(probs)}'
-        except Exception as ex:
-            raise ValueError(f'cnn_error_{type(ex).__name__}')
 
     raise ValueError('unsupported_command')
 
 
 def handle(conn, address):
     with conn:
-        conn.settimeout(15)
+        conn.settimeout(FRAME_TIMEOUT_SECONDS)
         try:
             while True:
                 request = recv_frame(conn)
                 if request is None:
                     return
                 try:
-                    answer = evaluate(request)
+                    if request.partition('|')[0] in ('JOB', 'CONV', 'MLP', 'IDENTIFY'):
+                        if not COMPUTE_SLOTS.acquire(timeout=FRAME_TIMEOUT_SECONDS):
+                            parts = request.split('|')
+                            if parts[0] == 'JOB':
+                                ids = '|'.join(parts[i] if len(parts) > i and valid_id(parts[i]) else 'unknown' for i in (1, 2))
+                            else:
+                                ids = parts[1] if len(parts) > 1 else 'unknown'
+                            answer = 'ERROR|' + ids + '|worker_busy'
+                        else:
+                            try:
+                                answer = evaluate(request)
+                            finally:
+                                COMPUTE_SLOTS.release()
+                    else:
+                        answer = evaluate(request)
                 except (ValueError, OverflowError) as ex:
                     items = request.split('|')
                     job_id = items[1] if len(items) > 1 else 'unknown'
                     answer = f'ERROR|{job_id}|{type(ex).__name__}'
+                conn.settimeout(FRAME_TIMEOUT_SECONDS)
                 send_frame(conn, answer)
-        except (OSError, ConnectionError, UnicodeError) as ex:
+        except (OSError, ValueError) as ex:
             print(f'conexion {address} terminada: {ex}', file=sys.stderr)
 
 
 def main():
+    global COMPUTE_THREADS, COMPUTE_SLOTS
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 9102
+    COMPUTE_THREADS = int(sys.argv[2]) if len(sys.argv) > 2 else 1
+    if not 1 <= COMPUTE_THREADS <= 256:
+        raise ValueError('invalid_threads')
+    COMPUTE_SLOTS = threading.BoundedSemaphore(COMPUTE_THREADS)
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server.bind(('0.0.0.0', port))
     server.listen(64)
-    print(f'WorkerPython escuchando en {port}', flush=True)
+    print(f'WorkerPython escuchando en {port}, compute_threads={COMPUTE_THREADS} (GIL: no garantiza paralelismo CPU)', flush=True)
     with server:
         while True:
             conn, addr = server.accept()
