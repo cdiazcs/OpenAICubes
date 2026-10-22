@@ -1,104 +1,286 @@
-# Open AI Cubes — estructura inicial (v0.1)
+# Open AI Cubes
 
-Proyecto para el parcial CC4P1: concurrencia, paralelismo y sistemas distribuidos con **solo SDK/bibliotecas estándar**.
+**Proyecto del curso de Programación Concurrente y Distribuida — CC4P1**
 
-> **Estado actual:** starter de red funcional con micro chunks `CONV` y `MLP`; **NO** es aún la solución completa del parcial. Faltan CNN de imágenes, entrenamiento/pesos, frontend Swing, reparto de un mismo micro chunk entre nodos y benchmarks de 4 escenarios.
+#Integrantes
+- Maurizio Berdiales
+- Enoc Rosales
+- Cristian Diaz
 
-## Equipos y ramas
+## ¿De qué trata nuestro proyecto?
 
-- Integrante 1: `feat/java-server` → servidor Java, frontend Swing y worker Java.
-- Integrante 2: `feat/cnn-python` → CNN matemática, dataset/pesos y worker Python.
-- Integrante 3: `feat/csharp-benchmark` → worker C#, pruebas de carga y clúster.
-- `develop`: integración de PRs; `main`: versión final probada.
+Open AI Cubes es un proyecto que desarrollamos para el curso de Programación Concurrente y Distribuida.
 
-Documentos compartidos: `docs/protocol.md`, `docs/model-spec.md`, `docs/architecture.md`, `docs/work-plan.md`, `docs/experiments.md`.
+Nuestro objetivo fue implementar un sistema capaz de identificar imágenes utilizando una **red neuronal convolucional (CNN)** y distribuir las operaciones de procesamiento entre diferentes nodos.
 
-## Estructura
+Para esto utilizamos **Java, Python y C#**, conectando los componentes mediante sockets TCP. También aplicamos conceptos de concurrencia, paralelismo, comunicación entre procesos y coordinación de tareas.
 
-- `server-java/`: servidor central con threads y round-robin.
-- `clients-java/`: cliente CLI para pruebas (no sustituye al frontend).
-- `frontend-java/`: módulo Swing por desarrollar.
-- `cnn-java/`: CNN secuencial de referencia por desarrollar.
-- `workers/java/`, `workers/python/`, `workers/csharp/`: workers micro chunks.
-- `model/weights/`: pesos de CNN cuando estén validados.
-- `tests/`: casos numéricos comparables por protocolo.
-- `benchmarks/`: mediciones y gráficas por desarrollar.
+Una de las principales restricciones del proyecto fue trabajar únicamente con las bibliotecas estándar de cada lenguaje, sin utilizar frameworks ni librerías externas de inteligencia artificial.
 
-## Requisitos técnicos
+## Funcionamiento del sistema
 
-- **Java 8+** (código usa solo APIs Java 8), `javac` y `java`.
-- **Python 3.8+**, biblioteca estándar.
-- **.NET SDK 8** para `workers/csharp`, sin NuGet externos.
-- Abrir puertos TCP 9000, 9101, 9102, 9103 si se ejecutan en máquinas diferentes; usar direcciones LAN correctas.
+El sistema está organizado en varios componentes que trabajan de manera conjunta.
 
-## Arranque manual (cuatro terminales)
+El usuario puede seleccionar una imagen desde una interfaz gráfica desarrollada en Java Swing. Esta imagen se envía al servidor central Java, que se encarga de coordinar las operaciones de la CNN.
 
-Desde la raíz del proyecto:
+Dependiendo del modo seleccionado, el procesamiento puede realizarse secuencialmente o mediante micro chunks distribuidos entre los workers disponibles.
 
-### 1. Compilar Java
+Los nodos realizan los cálculos correspondientes y devuelven sus resultados al servidor, que finalmente obtiene la clasificación de la imagen y la muestra en la interfaz.
 
-```bash
-mkdir -p build
-javac -d build server-java/CentralServer.java clients-java/ClientCli.java workers/java/WorkerJava.java
+El flujo general es:
+
+```text
+              Usuario
+                 |
+                 v
+        Frontend Java Swing
+                 |
+                 v
+        Servidor Central Java
+                 |
+          Sockets TCP
+                 |
+        +--------+--------+
+        |        |        |
+        v        v        v
+     Java     Python     C#
+     Worker   Worker    Worker
+        |        |        |
+        +--------+--------+
+                 |
+                 v
+        Resultado de la CNN
+                 |
+                 v
+        Clasificación final
 ```
 
-### 2. Arrancar workers (una terminal por worker)
+## Implementación de la CNN
 
-```bash
-java -cp build WorkerJava 9101
+Desarrollamos una red neuronal convolucional desde cero utilizando Python y sus bibliotecas estándar.
+
+El modelo trabaja con imágenes de **16 × 16 píxeles** y realiza las siguientes operaciones:
+
+1. Lectura y normalización de la imagen.
+2. Aplicación de dos filtros convolucionales de 3 × 3.
+3. Función de activación ReLU.
+4. Max Pooling.
+5. Conversión de los resultados a un vector de 98 características.
+6. Procesamiento mediante un MLP de 98 → 8 → 3 neuronas.
+7. Aplicación de Softmax para obtener las probabilidades de clasificación.
+
+Para nuestro proyecto trabajamos con tres figuras geométricas:
+
+- Círculo
+- Cruz
+- Triángulo
+
+Elegimos estas categorías para poder implementar, entrenar y evaluar la CNN, concentrándonos también en la parte concurrente y distribuida del curso.
+
+## Entrenamiento y resultados
+
+Para entrenar el modelo generamos imágenes sintéticas con diferentes posiciones, tamaños y variaciones de las figuras.
+
+El conjunto de datos se dividió de la siguiente manera:
+
+| Conjunto | Imágenes | Uso |
+|---|---:|---|
+| Entrenamiento | 720 | Entrenar los parámetros de la CNN |
+| Validación | 180 | Seleccionar el mejor modelo |
+| Prueba | 300 | Evaluar las clasificaciones |
+| **Total** | **1200** | |
+
+La CNN cuenta con **837 parámetros entrenables**.
+
+Utilizamos semillas diferentes para generar los conjuntos de datos y hacer que el entrenamiento fuera reproducible.
+
+En las pruebas del modelo obtuvimos **300 clasificaciones correctas de 300 imágenes evaluadas**, alcanzando una precisión del 100 % en nuestro conjunto de prueba sintético.
+
+Este resultado corresponde únicamente a las figuras geométricas utilizadas en el proyecto. No significa que la CNN pueda reconocer cualquier imagen u objeto del mundo real.
+
+Los pesos entrenados se encuentran almacenados en `model/weights/`.
+
+## Programación concurrente y distribuida
+
+Una de las partes principales del proyecto fue implementar la comunicación y el procesamiento entre nodos.
+
+Para esto desarrollamos un protocolo propio basado en sockets TCP, permitiendo intercambiar mensajes y resultados entre Java, Python y C#.
+
+Las operaciones implementadas incluyen:
+
+- `PING`: comprobar la comunicación con los nodos.
+- `CONV`: realizar operaciones de convolución.
+- `MLP`: ejecutar cálculos del perceptrón multicapa.
+- `IDENTIFY`: procesar una imagen y obtener su clasificación.
+
+También implementamos un coordinador en Java para distribuir operaciones independientes de la CNN.
+
+El coordinador puede dividir cálculos convolucionales y operaciones de las capas densas, enviar tareas a distintos workers y reunir los resultados para continuar el procesamiento.
+
+De esta manera aplicamos conceptos del curso como threads, ejecución concurrente, paralelismo, sockets y paso de mensajes.
+
+## Interfaz gráfica
+
+Desarrollamos una interfaz de escritorio utilizando **Java Swing**, desde la cual podemos interactuar con el sistema.
+
+La aplicación permite seleccionar imágenes, visualizarlas y enviarlas al servidor para obtener una clasificación.
+
+También muestra la clase predicha, las probabilidades y el tiempo de respuesta de la solicitud.
+
+La interfaz incluye dos modalidades de inferencia:
+
+- **SEQUENTIAL:** ejecuta la CNN de manera secuencial.
+- **DISTRIBUTED:** utiliza el coordinador para repartir cálculos entre los nodos configurados.
+
+Esto nos permite observar el comportamiento de la misma CNN utilizando diferentes estrategias de procesamiento.
+
+## Pruebas de comunicación y rendimiento
+
+Implementamos pruebas automáticas para verificar el funcionamiento de los componentes.
+
+Entre ellas se encuentran:
+
+- Validación de operaciones matemáticas.
+- Comunicación TCP entre procesos.
+- Compatibilidad de resultados entre lenguajes.
+- Manejo de mensajes incorrectos.
+- Atención concurrente de solicitudes.
+- Comparación numérica de inferencias secuenciales y distribuidas.
+
+También desarrollamos un generador de carga que permite enviar cientos de solicitudes, controlar la cantidad de clientes concurrentes y utilizar retrasos aleatorios.
+
+Durante las pruebas iniciales registramos latencia, throughput y errores, almacenando los resultados en archivos CSV para generar gráficas.
+
+Estas mediciones iniciales se realizaron sobre operaciones de convolución. La comparación definitiva de la CNN completa en los cuatro escenarios del parcial debe respaldarse con los resultados experimentales correspondientes.
+
+## Tecnologías utilizadas
+
+| Tecnología | Uso en el proyecto |
+|---|---|
+| Java | Servidor central, frontend, coordinación y concurrencia |
+| Python | CNN, entrenamiento, evaluación y worker |
+| C# | Worker de procesamiento |
+| TCP Sockets | Comunicación entre nodos |
+| Java Swing | Interfaz gráfica |
+| Git y GitHub | Control de versiones |
+| VS Code | Desarrollo y pruebas |
+
+Todo el procesamiento se implementó con las bibliotecas estándar de los lenguajes utilizados.
+
+## Estructura del proyecto
+
+```text
+OpenAICubes/
+│
+├── benchmarks/
+│
+├── clients-java/
+│
+├── cnn-java/
+│
+├── cnn_python/
+│
+├── docs/
+│
+├── frontend-java/
+│
+├── model/
+│   ├── weights/
+│   ├── data/
+│   ├── examples/
+│   ├── training/
+│   └── evaluation/
+│
+├── server-java/
+│
+├── tests/
+│
+├── workers/
+│   ├── java/
+│   ├── python/
+│   └── csharp/
+│
+└── README.md
 ```
 
-```bash
-python3 workers/python/worker.py 9102
+Organizamos el proyecto por módulos para facilitar las pruebas, el mantenimiento del código y la integración de las diferentes implementaciones.
+
+## Requisitos para ejecutar el proyecto
+
+Es necesario tener instalados:
+
+- Java JDK 8 o superior.
+- Python 3.8 o superior.
+- .NET SDK 8.
+
+No se necesitan frameworks externos ni librerías de inteligencia artificial.
+
+## Ejecución y pruebas
+
+Los siguientes comandos se ejecutan desde la carpeta principal del proyecto.
+
+### Probar la CNN localmente
+
+```powershell
+python -m cnn_python.predict model/examples/circulo-0.png
+python -m cnn_python.predict model/examples/cruz-0.png
+python -m cnn_python.predict model/examples/triangulo-0.png
 ```
 
-```bash
-dotnet run --project workers/csharp/Worker.csproj -- 9103
+### Ejecutar las pruebas automáticas
+
+```powershell
+python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
-### 3. Arrancar servidor central
+### Volver a entrenar y evaluar la CNN
 
-```bash
-java -cp build CentralServer 9000 127.0.0.1:9101 127.0.0.1:9102 127.0.0.1:9103
+```powershell
+python -m cnn_python.dataset
+python -m cnn_python.train
+python -m cnn_python.evaluate
 ```
 
-Si alguno de los workers no está disponible, el servidor intentará los demás; para la demostración de **tres lenguajes** deben estar efectivamente activos los tres.
+### Probar la comunicación TCP
 
-### 4. Ejecutar cliente de prueba
-
-```bash
-java -cp build ClientCli 127.0.0.1 9000
+```powershell
+python tests/test_protocol.py
 ```
 
-Se espera: `PONG`, `RESULT|demo1|2|2|-4,-4,-4,-4` y `RESULT|demo2|1|2|0.26894...,0.73105...`.
+Estas pruebas permiten comprobar el funcionamiento matemático y la comunicación de los componentes.
 
-### 5. Probar igualdad entre nodos
+Para ejecutar el sistema completo se deben iniciar los workers, el servidor central Java y posteriormente la interfaz Swing, utilizando las configuraciones de IP y puerto correspondientes.
 
-```bash
-python3 tests/smoke_test.py 127.0.0.1:9101 127.0.0.1:9102 127.0.0.1:9103 127.0.0.1:9000
-```
+## Organización del equipo
 
-Al usar máquinas separadas, sustituir las IPs LAN e iniciar allí el worker respectivo. No pasar `localhost` si el worker está en otra computadora.
+El proyecto fue desarrollado por tres integrantes, dividiendo las principales responsabilidades de la siguiente manera:
 
-## Ejemplo de división de trabajo (paso siguiente)
+| Integrante | Responsabilidad |
+|---|---|
+| Integrante 1 | Servidor Java, sockets e interfaz Swing |
+| Integrante 2 | CNN, entrenamiento, pesos y worker Python |
+| Integrante 3 | Worker C#, benchmarks y despliegue distribuido |
 
-1. Congelar `docs/protocol.md` y `docs/model-spec.md` con la aprobación de todo el equipo.
-2. Implementar imagen y CNN de referencia (Conv + ReLU + Pooling + Flatten + MLP) y pesos que clasifiquen de verdad.
-3. Cambiar coordinador para distribuir micro chunks dentro del cálculo de una imagen y ensamblar sus resultados.
-4. Construir frontend Swing e identificar imágenes.
-5. Implementar los cuatro escenarios, mediciones y saturación de cientos de solicitudes.
-6. Hacer PRs a `develop`; fusionar a `main` cuando esté validado.
+Utilizamos GitHub para organizar el trabajo, desarrollar módulos de manera independiente e integrar los avances.
 
-## Seguridad / límites
+La rama `develop` se utilizó para integrar y probar las implementaciones. La rama `main` se reservó para la versión final del proyecto.
 
-Protocolo v0.1 experimental pensado para un clúster de laboratorio, sin autenticación y sin cifrado. Ejecutarlo únicamente en red de confianza. Los puertos y el tamaño máximo de mensajes están documentados en `docs/protocol.md`.
+## Estado final del desarrollo
 
-## Entrega de Univirtual
+Hemos completado la implementación principal de Open AI Cubes, incluyendo la CNN secuencial, el procesamiento de imágenes, la comunicación mediante sockets TCP, los workers en tres lenguajes, el coordinador distribuido y el cliente de escritorio Java Swing.
 
-Preparar ZIP **limpio**, no subir `.git`, `build/`, `bin/`, `obj/`, `__pycache__/` ni archivos temporales. Sí incluir fuentes (`.java`, `.py`, `.cs`, `.csproj`), pesos y documentación/PDF que sean necesarios para reproducir la entrega. Verificar restricciones exactas con el docente.
+Con este proyecto logramos aplicar de manera práctica varios conceptos desarrollados durante el curso de Programación Concurrente y Distribuida.
 
-## Inicializar GitHub desde este ZIP
+Las pruebas locales nos permitieron validar los cálculos y la comunicación entre componentes. La ejecución física del clúster en diferentes computadoras y la comparación de los cuatro escenarios de rendimiento deben verificarse con sus respectivas evidencias experimentales.
 
-Consultar [`docs/git-setup.md`](docs/git-setup.md): indica la creación de `main`, `develop`, ramas individuales y las reglas de PR. Importante: usar **un único repositorio remoto** compartido.
+## Consideraciones
 
-Windows PowerShell: la carpeta de compilación puede crearse con `New-Item -ItemType Directory -Force build`; la ejecución de Java, Python y .NET es equivalente (con `py` si no hay comando `python3`).
+El proyecto fue desarrollado con fines académicos. El protocolo TCP está pensado para ejecutarse dentro de una red local de confianza y no incorpora mecanismos de autenticación o cifrado.
+
+Por otro lado, la CNN fue entrenada con imágenes sintéticas de figuras geométricas, por lo que su funcionamiento está orientado a las categorías utilizadas durante el desarrollo.
+
+---
+
+**Open AI Cubes — CC4P1 — 2026-II**
+
+*Proyecto académico de Programación Concurrente y Distribuida.*

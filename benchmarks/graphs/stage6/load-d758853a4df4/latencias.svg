@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1060" height="490" viewBox="0 0 1060 490">
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="Arial, sans-serif" fill="#273142">
+<text x="530.0" y="28" text-anchor="middle" font-size="20">Latencia media y P95</text>
+<text x="530.0" y="50" text-anchor="middle" font-size="11">IDENTIFY medido; ms; carga d758853a4df4</text>
+<line x1="85" x2="1035" y1="340.0" y2="340.0" stroke="#ddd"/>
+<text x="77" y="344.0" text-anchor="end" font-size="10">0</text>
+<line x1="85" x2="1035" y1="287.0" y2="287.0" stroke="#ddd"/>
+<text x="77" y="291.0" text-anchor="end" font-size="10">1.435</text>
+<line x1="85" x2="1035" y1="234.0" y2="234.0" stroke="#ddd"/>
+<text x="77" y="238.0" text-anchor="end" font-size="10">2.869</text>
+<line x1="85" x2="1035" y1="181.0" y2="181.0" stroke="#ddd"/>
+<text x="77" y="185.0" text-anchor="end" font-size="10">4.304</text>
+<line x1="85" x2="1035" y1="128.0" y2="128.0" stroke="#ddd"/>
+<text x="77" y="132.0" text-anchor="end" font-size="10">5.738</text>
+<line x1="85" x2="1035" y1="75.0" y2="75.0" stroke="#ddd"/>
+<text x="77" y="79.0" text-anchor="end" font-size="10">7.173</text>
+<rect x="136.16666666666669" y="323.56384103282653" width="24" height="16.436158967173466" fill="#4b81c7"/>
+<text x="148.16666666666669" y="318.56384103282653" text-anchor="middle" font-size="10">0.4449</text>
+<rect x="164.16666666666669" y="298.8158325839485" width="24" height="41.18416741605148" fill="#ed9b34"/>
+<text x="176.16666666666669" y="293.8158325839485" text-anchor="middle" font-size="10">1.115</text>
+<text transform="translate(156.16666666666669,355) rotate(30)" font-size="10">local-parallel-c8-r1 c=8</text>
+<rect x="294.5" y="324.84486925849245" width="24" height="15.155130741507557" fill="#4b81c7"/>
+<text x="306.5" y="319.84486925849245" text-anchor="middle" font-size="10">0.4102</text>
+<rect x="322.5" y="294.2086147883249" width="24" height="45.79138521167508" fill="#ed9b34"/>
+<text x="334.5" y="289.2086147883249" text-anchor="middle" font-size="10">1.239</text>
+<text transform="translate(314.5,355) rotate(30)" font-size="10">local-parallel-c8-r2 c=8</text>
+<rect x="452.83333333333337" y="309.8212825285289" width="24" height="30.178717471471092" fill="#4b81c7"/>
+<text x="464.83333333333337" y="304.8212825285289" text-anchor="middle" font-size="10">0.8168</text>
+<rect x="480.83333333333337" y="109.56521739130432" width="24" height="230.43478260869568" fill="#ed9b34"/>
+<text x="492.83333333333337" y="104.56521739130432" text-anchor="middle" font-size="10">6.237</text>
+<text transform="translate(472.83333333333337,355) rotate(30)" font-size="10">local-parallel-c8-r3 c=8</text>
+<rect x="611.1666666666667" y="320.30165743006324" width="24" height="19.698342569936777" fill="#4b81c7"/>
+<text x="623.1666666666667" y="315.30165743006324" text-anchor="middle" font-size="10">0.5332</text>
+<rect x="639.1666666666667" y="217.5448062404584" width="24" height="122.4551937595416" fill="#ed9b34"/>
+<text x="651.1666666666667" y="212.5448062404584" text-anchor="middle" font-size="10">3.314</text>
+<text transform="translate(631.1666666666667,355) rotate(30)" font-size="10">local-sequential-c8-r1 c=8</text>
+<rect x="769.5" y="323.36260869565217" width="24" height="16.637391304347823" fill="#4b81c7"/>
+<text x="781.5" y="318.36260869565217" text-anchor="middle" font-size="10">0.4503</text>
+<rect x="797.5" y="250.25716098179868" width="24" height="89.74283901820134" fill="#ed9b34"/>
+<text x="809.5" y="245.25716098179868" text-anchor="middle" font-size="10">2.429</text>
+<text transform="translate(789.5,355) rotate(30)" font-size="10">local-sequential-c8-r2 c=8</text>
+<rect x="927.8333333333334" y="322.2932169172749" width="24" height="17.70678308272511" fill="#4b81c7"/>
+<text x="939.8333333333334" y="317.2932169172749" text-anchor="middle" font-size="10">0.4793</text>
+<rect x="955.8333333333334" y="240.2188203637479" width="24" height="99.7811796362521" fill="#ed9b34"/>
+<text x="967.8333333333334" y="235.2188203637479" text-anchor="middle" font-size="10">2.701</text>
+<text transform="translate(947.8333333333334,355) rotate(30)" font-size="10">local-sequential-c8-r3 c=8</text>
+<text x="85" y="478" fill="#4b81c7" font-size="12">mean.ms</text>
+<text x="325" y="478" fill="#ed9b34" font-size="12">p95.ms</text>
+</g>
+</svg>

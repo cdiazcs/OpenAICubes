@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1060" height="490" viewBox="0 0 1060 490">
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="Arial, sans-serif" fill="#273142">
+<text x="530.0" y="28" text-anchor="middle" font-size="20">Throughput correcto</text>
+<text x="530.0" y="50" text-anchor="middle" font-size="11">IDENTIFY medido; solicitudes/s; carga d758853a4df4</text>
+<line x1="85" x2="1035" y1="340.0" y2="340.0" stroke="#ddd"/>
+<text x="77" y="344.0" text-anchor="end" font-size="10">0</text>
+<line x1="85" x2="1035" y1="287.0" y2="287.0" stroke="#ddd"/>
+<text x="77" y="291.0" text-anchor="end" font-size="10">3886</text>
+<line x1="85" x2="1035" y1="234.0" y2="234.0" stroke="#ddd"/>
+<text x="77" y="238.0" text-anchor="end" font-size="10">7771</text>
+<line x1="85" x2="1035" y1="181.0" y2="181.0" stroke="#ddd"/>
+<text x="77" y="185.0" text-anchor="end" font-size="10">1.166e+04</text>
+<line x1="85" x2="1035" y1="128.0" y2="128.0" stroke="#ddd"/>
+<text x="77" y="132.0" text-anchor="end" font-size="10">1.554e+04</text>
+<line x1="85" x2="1035" y1="75.0" y2="75.0" stroke="#ddd"/>
+<text x="77" y="79.0" text-anchor="end" font-size="10">1.943e+04</text>
+<rect x="150.16666666666669" y="168.84530383304252" width="24" height="171.15469616695748" fill="#3b9679"/>
+<text x="162.16666666666669" y="163.84530383304252" text-anchor="middle" font-size="10">1.255e+04</text>
+<text transform="translate(156.16666666666669,355) rotate(30)" font-size="10">local-parallel-c8-r1 c=8</text>
+<rect x="308.5" y="174.17568182414016" width="24" height="165.82431817585984" fill="#3b9679"/>
+<text x="320.5" y="169.17568182414016" text-anchor="middle" font-size="10">1.216e+04</text>
+<text transform="translate(314.5,355) rotate(30)" font-size="10">local-parallel-c8-r2 c=8</text>
+<rect x="466.83333333333337" y="241.0979728824455" width="24" height="98.9020271175545" fill="#3b9679"/>
+<text x="478.83333333333337" y="236.0979728824455" text-anchor="middle" font-size="10">7251</text>
+<text transform="translate(472.83333333333337,355) rotate(30)" font-size="10">local-parallel-c8-r3 c=8</text>
+<rect x="625.1666666666667" y="143.0189057865113" width="24" height="196.9810942134887" fill="#3b9679"/>
+<text x="637.1666666666667" y="138.0189057865113" text-anchor="middle" font-size="10">1.444e+04</text>
+<text transform="translate(631.1666666666667,355) rotate(30)" font-size="10">local-sequential-c8-r1 c=8</text>
+<rect x="783.5" y="109.56521739130434" width="24" height="230.43478260869566" fill="#3b9679"/>
+<text x="795.5" y="104.56521739130434" text-anchor="middle" font-size="10">1.689e+04</text>
+<text transform="translate(789.5,355) rotate(30)" font-size="10">local-sequential-c8-r2 c=8</text>
+<rect x="941.8333333333334" y="120.67419547879774" width="24" height="219.32580452120226" fill="#3b9679"/>
+<text x="953.8333333333334" y="115.67419547879774" text-anchor="middle" font-size="10">1.608e+04</text>
+<text transform="translate(947.8333333333334,355) rotate(30)" font-size="10">local-sequential-c8-r3 c=8</text>
+<text x="85" y="478" fill="#3b9679" font-size="12">throughput.rps</text>
+</g>
+</svg>
